@@ -9,72 +9,80 @@ var config = {
 };
 firebase.initializeApp(config);
 
-
-// Create a variable to reference the database.
 var database = firebase.database();
 
-//Adding trains per on click function
-$("#data-input").on("click", function () {
+// Button for adding trains
+$("#add-train-btn").on("click", function (event) {
   event.preventDefault();
 
-  //Input values
-  var trainName = $('#train-name').val().trim();
-  var trainDestination = $('#destination').val().trim();
-  var firstTrainTime = $("#train-time").val().trim();
-  var trainFrequency = $('#frequency').val().trim();
+  // Grabs user input
+  var tName = $("#employee-name-input").val().trim();
+  var tDestination = $("#role-input").val().trim();
+  var tTime = $("#start-input").val().trim();
+  var tFrequency = $("#rate-input").val().trim();
 
-  //Temporary object for holding data
-  var tempTrain = {
-    name: trainName,
-    destination: trainDestination,
-    firstTime: firstTrainTime,
-    frequency: trainFrequency
+  // Creates local "temporary" object for holding train data
+  var newTrain = {
+    train: tName,
+    destination: tDestination,
+    time: tTime,
+    frequency: tFrequency
   };
 
-  //Uploads to firebase
-  database.ref().push(tempTrain);
+  // Uploads employee data to the database
+  database.ref().push(newTrain);
 
-  //Console logs
-  console.log(tempTrain.name);
-  console.log(tempTrain.destination);
-  console.log(tempTrain.firstTime);
-  console.log(tempTrain.frequency);
+  // Alert
+  alert("Train successfully added");
 
-  //Alert
-  alert("Train successfully added!");
-
-  //Clears all text boxes
-  $('#train-name').val('');
-  $('#destination').val('');
-  $('#train-time').val('');
-  $('#frequency').val('');
+  // Clears all of the text-boxes
+  $("#employee-name-input").val("");
+  $("#role-input").val("");
+  $("#start-input").val("");
+  $("#rate-input").val("");
 
 });
 
-
-//Adding child to table per exercise 19
+// Create Firebase event for adding train to the database and a row in the html when a user adds an entry
 database.ref().on("child_added", function (childSnapshot, prevChildKey) {
+
   console.log(childSnapshot.val());
 
-  //Store into variable
-  var trainName = childSnapshot.var().name;
-  var trainDestination = childSnapshot.var().destination;
-  var firstTrainTime = childSnapshot.var().firstTime;
-  var trainFrequency = childSnapshot.var().frequency;
+  // Store everything into a variable.
+  var newName = childSnapshot.val().train;
+  var newDestination = childSnapshot.val().destination;
+  var newTime = childSnapshot.val().time;
+  var newFrequency = childSnapshot.val().frequency;
 
-  //Console log info
-  console.log(name);
-  console.log(destination);
-  console.log(firstTrainTime);
-  console.log(frequency);
 
-  //Date formatting
-  //var timeConverted = moment.unix(firstTrainTime).format("MM/DD/YY");
+  // First Time (pushed back 1 year to make sure it comes before current time)
+  var startTimeConverted = moment(newTime, "hh:mm").subtract(1, "years");
 
-  //Add train data into table
-  $("#employee-table > tbody").append("<tr><td>" + trainName + "</td><td>" + trainDestination + "</td><td>" +
-  firstTrainTime + "</td><td>" + trainFrequency + "</td></tr>");
+  // Current Time
+  var currentTime = moment();
 
+  // Difference between the times
+  var diffTime = moment().diff(moment(startTimeConverted), "minutes");
+
+  // Time apart (remainder)
+  var tRemainder = diffTime % newFrequency;
+
+  // Minute(s) Until Train
+  var tMinutesTillTrain = newFrequency - tRemainder;
+
+  // Next Train
+  var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+  var catchTrain = moment(nextTrain).format("h:mm a");
+
+  // Add each train's data into the table
+  $("#employee-table > tbody").append("<tr><td>" + newName + "</td><td>" + newDestination + "</td><td>" + newFrequency
+    + "</td><td>" + catchTrain + "</td><td>" + tMinutesTillTrain + "</td></tr>");
 });
 
+// Example Time Math
+// -----------------------------------------------------------------------------
+// Assume Employee start date of January 1, 2015
+// Assume current date is March 1, 2016
 
+// We know that this is 15 months.
+// Now we will create code in moment.js to confirm that any attempt we use mets this test case
